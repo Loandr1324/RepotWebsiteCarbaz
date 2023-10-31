@@ -161,11 +161,11 @@ def read_xlsx_custom(file_list, file_list_sms):
     :return: custom_row, sms_row
     """
     # noinspection PyTypeChecker
-    custom_row = pd.concat([pd.read_excel(filename, sheet_name='TDSheet', header=10, usecols="A:M",
+    custom_row = pd.concat([pd.read_excel(smbclient.open_file(filename, 'rb'), sheet_name='TDSheet', header=10, usecols="A:M",
                                           skipfooter=1, engine='openpyxl') for filename in file_list],
                            ignore_index=True)
     custom_row = custom_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
-    sms_row = pd.concat([pd.read_csv(filename, sep=';', index_col=False,
+    sms_row = pd.concat([pd.read_csv(smbclient.open_file(filename, 'rb'), sep=';', index_col=False,
                                      encoding='utf-8') for filename in file_list_sms], ignore_index=True)
     sms_row = sms_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
     sms_row.to_excel('test.xlsx')
@@ -184,12 +184,14 @@ def read_xlsx_supp(file_list_order: list, file_list_receipt: list) -> tuple[Data
     # noinspection PyTypeChecker
     supp_ord_row = pd.concat([
         pd.read_excel(
-            filename, sheet_name="TDSheet", header=10, usecols="A:J", skipfooter=1, engine='openpyxl'
+            smbclient.open_file(filename, 'rb'),
+            sheet_name="TDSheet", header=10, usecols="A:J", skipfooter=1, engine='openpyxl'
         ) for filename in file_list_order
     ], ignore_index=True)
     supp_ord_row = supp_ord_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
     # noinspection PyTypeChecker
-    supp_rec_row = pd.concat([pd.read_excel(filename, sheet_name='TDSheet', header=8, usecols="A:I",
+    supp_rec_row = pd.concat([pd.read_excel(smbclient.open_file(filename, 'rb'),
+                                            sheet_name='TDSheet', header=8, usecols="A:I",
                                             skipfooter=0, engine='openpyxl') for filename in file_list_receipt],
                              ignore_index=True)
     supp_rec_row = supp_rec_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
@@ -385,7 +387,7 @@ def append_file_data(file_name, df_t):
     :return: None
     """
     # Определение строки для записи
-    start_row = len(pd.read_excel(file_name, sheet_name='Данные', engine='openpyxl')) + 1
+    start_row = len(pd.read_excel(smbclient.open_file(file_name, 'rb'), sheet_name='Данные', engine='openpyxl')) + 1
 
     # Дописать в итоговый файл с данными, для дальнейшей обработки полученные строки
     with pd.ExcelWriter(file_name, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
@@ -402,7 +404,8 @@ def pivot_table(filename, category, set_cat, index):
     :return:
     """
     # noinspection PyTypeChecker
-    data_pd = pd.read_excel(filename, sheet_name='Данные', header=0, usecols="A:F", skipfooter=0, engine='openpyxl')
+    data_pd = pd.read_excel(smbclient.open_file(filename, 'rb'), sheet_name='Данные', header=0, usecols="A:F",
+                            skipfooter=0, engine='openpyxl')
     data_pd[category] = data_pd[category].astype('category')
     data_pd[category] = data_pd[category].cat.set_categories(set_cat,
                                                              ordered=True)
