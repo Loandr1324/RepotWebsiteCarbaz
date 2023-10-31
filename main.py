@@ -391,7 +391,7 @@ def append_file_data(file_name, df_t):
 
     # Дописать в итоговый файл с данными, для дальнейшей обработки полученные строки
     with pd.ExcelWriter(
-            smbclient.open_file(file_name, 'rb'), engine='openpyxl', mode='a', if_sheet_exists='overlay'
+            smbclient.open_file(file_name, 'w'), engine='openpyxl', mode='a', if_sheet_exists='overlay'
     ) as writer:
         df_t.to_excel(writer, 'Данные', index=False, header=False, startrow=start_row, startcol=0)
 
