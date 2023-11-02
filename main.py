@@ -1,10 +1,11 @@
 # Author Loik Andrey 7034@balancedv.ru
+import time
 from typing import Tuple
 
 from loguru import logger
 import smbclient
 from pandas import DataFrame
-
+import os  # Загружаем библиотеку для работы с файлами
 import config
 import send_mail  # Универсальный модуль для отправки сообщений на почту
 from datetime import date, timedelta  # Загружаем библиотеку для работы с текущим временем
@@ -26,8 +27,8 @@ smbclient.ClientConfig(username=config.LOCAL_PATH['USER'], password=config.LOCAL
 path = config.LOCAL_PATH['PATH_REPORT']
 
 # Наименование подготовленных к отправке по почте файлов с данными и графиком
-out_file_custom = path + '/' + 'Carbaz заказы клиентов (статистика).xlsx'
-out_file_supp = path + '/' + 'Carbaz Наши_зак_поставщикам наличие (статистика).xlsx'
+out_file_custom = 'Carbaz заказы клиентов (статистика).xlsx'
+out_file_supp = 'Carbaz Наши_зак_поставщикам наличие (статистика).xlsx'
 
 
 def get_sms_report():
@@ -135,10 +136,8 @@ def rename_out_file():
 
     # Полное наименование нового файла клиентов
     new_file_custom = f'Carbaz Заказы клиентов (до {date_new_name}).xlsx'
-    new_file_custom = path + "/" + new_file_custom
     # Полное наименование нового файла поставщиков
     new_file_supp = f'Carbaz Наши_зак_поставщикам_наличие (до {date_new_name}).xlsx'
-    new_file_supp = path + "/" + new_file_supp
     # Полное наименование старого файла клиентов
     old_file_custom = f'Carbaz Заказы клиентов (до {date_old_name}).xlsx'
     # Полное наименование старого файла поставщиков
@@ -147,8 +146,8 @@ def rename_out_file():
     Переименовываем старые файлы
     '''
     # TODO Раскомментировать строки после тестов
-    smbclient.rename(path + "/" + old_file_custom, new_file_custom)  # rename old file custom
-    smbclient.rename(path + "/" + old_file_supp, new_file_supp)  # rename old file supp
+    os.rename(old_file_custom, new_file_custom)  # rename old file custom
+    os.rename(old_file_supp, new_file_supp)  # rename old file supp
 
     return new_file_custom, new_file_supp
 
@@ -168,7 +167,6 @@ def read_xlsx_custom(file_list, file_list_sms):
     sms_row = pd.concat([pd.read_csv(smbclient.open_file(filename, 'rb'), sep=';', index_col=False,
                                      encoding='utf-8') for filename in file_list_sms], ignore_index=True)
     sms_row = sms_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
-    sms_row.to_excel('test.xlsx')
     # Это общее количество строк для Юры. Надо будет подумать как ему передать
     quantity_row_custom = len(custom_row)
     # print('Количество строк в заказах клиента: ', quantity_row_custom)
@@ -387,12 +385,9 @@ def append_file_data(file_name, df_t):
     :return: None
     """
     # Определение строки для записи
-    start_row = len(pd.read_excel(smbclient.open_file(file_name, 'rb'), sheet_name='Данные', engine='openpyxl')) + 1
-
+    start_row = len(pd.read_excel(file_name, sheet_name='Данные', engine='openpyxl')) + 1
     # Дописать в итоговый файл с данными, для дальнейшей обработки полученные строки
-    with pd.ExcelWriter(
-            smbclient.open_file(file_name, 'w'), engine='openpyxl', mode='a', if_sheet_exists='overlay'
-    ) as writer:
+    with pd.ExcelWriter(file_name, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
         df_t.to_excel(writer, 'Данные', index=False, header=False, startrow=start_row, startcol=0)
 
 
@@ -406,7 +401,7 @@ def pivot_table(filename, category, set_cat, index):
     :return:
     """
     # noinspection PyTypeChecker
-    data_pd = pd.read_excel(smbclient.open_file(filename, 'rb'), sheet_name='Данные', header=0, usecols="A:F",
+    data_pd = pd.read_excel(filename, sheet_name='Данные', header=0, usecols="A:F",
                             skipfooter=0, engine='openpyxl')
     data_pd[category] = data_pd[category].astype('category')
     data_pd[category] = data_pd[category].cat.set_categories(set_cat,
@@ -628,7 +623,7 @@ def format_custom(workbook):
     return year_format, caption_format, sales_type_format, month_format, sum_format, quantity_format
 
 
-def send_file_to_mail(files, quantity_row_custom=None, quantity_row_supp=None):
+def send_file_to_mail(files: list, quantity_row_custom=None, quantity_row_supp=None):
     """
     Отправляем файл на почту
     :param quantity_row_custom: Кол-во строк в заказах клиента
@@ -671,6 +666,7 @@ def send_file_to_mail(files, quantity_row_custom=None, quantity_row_supp=None):
     }
 
     send_mail.send(message)
+    return
 
 
 def remove_files():
@@ -685,7 +681,6 @@ def remove_files():
     smbclient.mkdir(path2)
 
     for item in smbclient.listdir(path1):
-        # logger.info(path1 + "/" + item)
         smbclient.copyfile(path1 + "/" + item, path2 + "/" + item)
         smbclient.remove(path1 + "/" + item)
     return
@@ -751,10 +746,10 @@ def run():
     Отправка файлов по почте и выдержка по количеству строк в теле письма
     '''
     # Подготавливаем и отправляем данные по почте Юре
-    logger.info("Начало Блока №3")
+    logger.info("Начало Блока №3 - Отправка на почту")
     send_file_to_mail([out_file_custom, out_file_supp], quantity_row_custom, quantity_row_supp)
     logger.info("Блок №3 завершён!")
-    logger.info("Начало Блока №4")
+    logger.info("Начало Блока №4 - Перенос файлов в папку архива и удаление Исходных данных")
     remove_files()
     logger.info("Блок №4 завершён!")
 
