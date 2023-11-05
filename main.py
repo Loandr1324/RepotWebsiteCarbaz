@@ -12,6 +12,7 @@ from datetime import date, timedelta  # Загружаем библиотеку 
 import pandas as pd
 import matplotlib.pyplot as plt
 import io  # Загружаем библиотеку для работы с директориями
+from smbclient import shutil as smb_shutil  # Универсальный модуль для копирования файлов
 
 
 # Заготовка для записи логов в файл
@@ -670,19 +671,36 @@ def send_file_to_mail(files: list, quantity_row_custom=None, quantity_row_supp=N
 
 def remove_files():
     """
-    Копируем отчеты с исходной папки в папку за месяц и удаляем все файлы из исходной папки с отчётами
+    Копируем отчеты с исходной папки и файлы с данными в папку за месяц и удаляем все файлы из исходной папки с отчётами
     :return: None
     """
     path1 = config.LOCAL_PATH['PATH_REPORT'] + r"\Исходные данные"
     year, month = date_xlsx()[1:]
     path2 = path + f"/Исходные данные на {month}.{year}"
 
+    # Создаём резервную папку за месяц отчета
     smbclient.mkdir(path2)
 
+    # Переносим файлы из Исходной директории в резервную
     for item in smbclient.listdir(path1):
         smbclient.copyfile(path1 + "/" + item, path2 + "/" + item)
         smbclient.remove(path1 + "/" + item)
+    # Переносим файлы с данными из директории скрипта в резервную папку
+    for item in os.listdir():
+        if item.endswith('.xlsx'):
+            smb_shutil.copyfile(item, path2 + "/" + item)
     return
+
+
+def test():
+    year, month = date_xlsx()[1:]
+    path2 = path + f"/Исходные данные на {month}.{year}"
+    for item in os.listdir():
+        if item.endswith('.xlsx'):
+            print(item)
+            print(path2 + "/" + item)
+            print(f'copy {item} {path2 + "/" + item}')
+            smb_shutil.copyfile(item, path2 + "/" + item)
 
 
 def run():
@@ -759,4 +777,5 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    # run()
+    test()
