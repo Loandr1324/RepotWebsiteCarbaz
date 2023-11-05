@@ -692,17 +692,6 @@ def remove_files():
     return
 
 
-def test():
-    year, month = date_xlsx()[1:]
-    path2 = path + f"/Исходные данные на {month}.{year}"
-    for item in os.listdir():
-        if item.endswith('.xlsx'):
-            print(item)
-            print(path2 + "/" + item)
-            print(f'copy {item} {path2 + "/" + item}')
-            smb_shutil.copyfile(item, path2 + "/" + item)
-
-
 def run():
     """
     Весь рабочий процесс программы по подстановке менеджера в заказы без менеджера.
@@ -777,5 +766,4 @@ def run():
 
 
 if __name__ == '__main__':
-    # run()
-    test()
+    run()
