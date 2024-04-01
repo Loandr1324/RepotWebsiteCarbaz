@@ -187,13 +187,13 @@ def read_xlsx_supp(file_list_order: list, file_list_receipt: list) -> tuple[Data
     supp_ord_row = pd.concat([
         pd.read_excel(
             smbclient.open_file(filename, 'rb'),
-            sheet_name="TDSheet", header=10, usecols="A:J", skipfooter=1, engine='openpyxl'
+            header=10, usecols="A:J", skipfooter=1, engine='openpyxl'
         ) for filename in file_list_order
     ], ignore_index=True)
     supp_ord_row = supp_ord_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
     # noinspection PyTypeChecker
     supp_rec_row = pd.concat([pd.read_excel(smbclient.open_file(filename, 'rb'),
-                                            sheet_name='TDSheet', header=8, usecols="A:I",
+                                            header=8, usecols="A:I",
                                             skipfooter=0, engine='openpyxl') for filename in file_list_receipt],
                              ignore_index=True)
     supp_rec_row = supp_rec_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
