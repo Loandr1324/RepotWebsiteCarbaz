@@ -159,8 +159,12 @@ def read_xlsx_custom(file_list, file_list_sms):
     :param file_list:
     :return: custom_row, sms_row
     """
-    # noinspection PyTypeChecker
-    custom_row = pd.concat([pd.read_excel(smbclient.open_file(filename, 'rb'), sheet_name='TDSheet', header=10, usecols="A:M",
+    # custom_row = pd.DataFrame()
+    # for filename in file_list:
+    #     with smbclient.open_file(filename, 'rb') as s:
+    #         df = pd.read_excel(s, header=10, usecols='A:M', skipfooter=1, engine='openpyxl')
+    #     custom_row = custom_row.concat(df, ignore_index=True)
+    custom_row = pd.concat([pd.read_excel(smbclient.open_file(filename, 'rb'), header=10, usecols="A:M",
                                           skipfooter=1, engine='openpyxl') for filename in file_list],
                            ignore_index=True)
     custom_row = custom_row.dropna(axis=1, how='all')  # Удаление пустых колонок, если axis=0, то строк
