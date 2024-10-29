@@ -24,7 +24,7 @@ logger.add(config.FILE_NAME_CONFIG,
 
 # Создаём подключение для работы с файлами на сервере
 smbclient.ClientConfig(username=config.LOCAL_PATH['USER'], password=config.LOCAL_PATH['PSW'])
-path = config.LOCAL_PATH['PATH_REPORT']
+path = config.LOCAL_PATH['PATH_REPORT_SERVER1']
 
 # Наименование подготовленных к отправке по почте файлов с данными и графиком
 out_file_custom = 'Carbaz заказы клиентов (статистика).xlsx'
@@ -52,26 +52,30 @@ def search_file():
     f_custom_order, f_supp_order, f_supp_receipt, f_sms
     """
 
-    path1 = config.LOCAL_PATH['PATH_REPORT'] + r"\Исходные данные"
+    paths = [
+        config.LOCAL_PATH['PATH_REPORT_SERVER1'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER2'] + r"\Исходные данные",
+    ]
     f_custom_order = []
     f_supp_order = []
     f_supp_receipt = []
     f_sms = []
-    for item in smbclient.listdir(path1):  # для каждого файла в папке folder
-        customer_order = item.startswith('Заказы клиентов', 12, 50)
-        supplier_order = item.startswith('Заказы поставщиков', 12, 50)
-        supplier_receipt = item.startswith('Поступления МХ', 12, 50)
-        sms = item.startswith('report_sent', 0, 50)
-        if customer_order and item.endswith('.xlsx'):
-            f_custom_order.append(path1 + "/" + item)
-        elif supplier_order and item.endswith('.xlsx'):
-            f_supp_order.append(path1 + "/" + item)
-        elif supplier_receipt and item.endswith('.xlsx'):
-            f_supp_receipt.append(path1 + "/" + item)
-        elif sms and item.endswith('.csv'):
-            f_sms.append(path1 + "/" + item)
-        else:
-            pass
+    for path_item in paths:
+        for item in smbclient.listdir(path_item):  # для каждого файла в папке folder
+            customer_order = item.startswith('Заказы клиентов', 12, 50)
+            supplier_order = item.startswith('Заказы поставщиков', 12, 50)
+            supplier_receipt = item.startswith('Поступления МХ', 12, 50)
+            sms = item.startswith('report_sent', 0, 50)
+            if customer_order and item.endswith('.xlsx'):
+                f_custom_order.append(path_item + "/" + item)
+            elif supplier_order and item.endswith('.xlsx'):
+                f_supp_order.append(path_item + "/" + item)
+            elif supplier_receipt and item.endswith('.xlsx'):
+                f_supp_receipt.append(path_item + "/" + item)
+            elif sms and item.endswith('.csv'):
+                f_sms.append(path_item + "/" + item)
+            else:
+                pass
     # Строки для тестов программы
     # logger.info('Файлы клиентов: ' + str(f_custom_order))
     # logger.info('Файлы поставщиков: ' + str(f_supp_order))
@@ -116,7 +120,8 @@ def send_mail_error(file_custom_order: list, file_supp_order: list, file_supp_re
         logger.info(f"Нет отчета по отправкам СМС за предыдущий месяц.")
         message['email_content'] = (f"Нет отчета по отправкам СМС за предыдущий месяц.<br>"
                                     f"Разместите отчет в папке:<br>"
-                                    f"{config.LOCAL_PATH['PATH_REPORT']}")
+                                    f"{config.LOCAL_PATH['PATH_REPORT_SERVER1']} или "
+                                    f"{config.LOCAL_PATH['PATH_REPORT_SERVER2']}")
     # Оправка письма со сформированными параметрами
     send_mail.send(message)
     return
@@ -678,17 +683,25 @@ def remove_files():
     Копируем отчеты с исходной папки и файлы с данными в папку за месяц и удаляем все файлы из исходной папки с отчётами
     :return: None
     """
-    path1 = config.LOCAL_PATH['PATH_REPORT'] + r"\Исходные данные"
+    paths = [
+        config.LOCAL_PATH['PATH_REPORT_SERVER1'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER2'],
+    ]
+    # path1 = config.LOCAL_PATH['PATH_REPORT_SERVER1'] + r"\Исходные данные"
     year, month = date_xlsx()[1:]
     path2 = path + f"/Исходные данные на {month}.{year}"
 
-    # Создаём резервную папку за месяц отчета
-    smbclient.mkdir(path2)
-
     # Переносим файлы из Исходной директории в резервную
-    for item in smbclient.listdir(path1):
-        smbclient.copyfile(path1 + "/" + item, path2 + "/" + item)
-        smbclient.remove(path1 + "/" + item)
+    for path_item in paths:
+        path1 = path_item + r"\Исходные данные"
+        path2 = path_item + f"/Исходные данные на {month}.{year}"
+
+        # Создаём резервную папку за месяц отчета
+        smbclient.mkdir(path2)
+
+        for item in smbclient.listdir(path1):
+            smbclient.copyfile(path1 + "/" + item, path2 + "/" + item)
+            smbclient.remove(path1 + "/" + item)
     # Переносим файлы с данными из директории скрипта в резервную папку
     for item in os.listdir():
         if item.endswith('.xlsx'):
