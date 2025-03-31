@@ -55,6 +55,12 @@ def search_file():
     paths = [
         config.LOCAL_PATH['PATH_REPORT_SERVER1'] + r"\Исходные данные",
         config.LOCAL_PATH['PATH_REPORT_SERVER2'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER3'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER4'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER5'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER6'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER7'] + r"\Исходные данные",
+        config.LOCAL_PATH['PATH_REPORT_SERVER8'] + r"\Исходные данные",
     ]
     f_custom_order = []
     f_supp_order = []
@@ -686,6 +692,12 @@ def remove_files():
     paths = [
         config.LOCAL_PATH['PATH_REPORT_SERVER1'],
         config.LOCAL_PATH['PATH_REPORT_SERVER2'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER3'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER4'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER5'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER6'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER7'],
+        config.LOCAL_PATH['PATH_REPORT_SERVER8'],
     ]
     # path1 = config.LOCAL_PATH['PATH_REPORT_SERVER1'] + r"\Исходные данные"
     year, month = date_xlsx()[1:]
