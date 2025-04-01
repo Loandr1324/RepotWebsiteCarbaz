@@ -703,21 +703,46 @@ def remove_files():
     year, month = date_xlsx()[1:]
     path2 = path + f"/Исходные данные на {month}.{year}"
 
+    if not smbclient.path.exists(path2):
+        smbclient.mkdir(path2)
+
     # Переносим файлы из Исходной директории в резервную
     for path_item in paths:
         path1 = path_item + r"\Исходные данные"
-        path2 = path_item + f"/Исходные данные на {month}.{year}"
-
-        # Создаём резервную папку за месяц отчета
-        smbclient.mkdir(path2)
+        # path2 = path_item + f"/Исходные данные на {month}.{year}"
 
         for item in smbclient.listdir(path1):
-            smbclient.copyfile(path1 + "/" + item, path2 + "/" + item)
-            smbclient.remove(path1 + "/" + item)
-    # Переносим файлы с данными из директории скрипта в резервную папку
+            item_path = path1 + "\\" + item
+            dest_path = path2 + "\\" + item
+
+            if smbclient.path.isfile(item_path):
+                try:
+                    # Скачиваем файл в память (без временного файла)
+                    with smbclient.open_file(item_path, mode='rb') as src_file:
+                        file_data = src_file.read()
+
+                    # Загружаем на целевой сервер
+                    with smbclient.open_file(dest_path, mode='wb') as dst_file:
+                        dst_file.write(file_data)
+
+                    # Удаляем исходный файл (если нужно)
+                    smbclient.remove(item_path)
+
+                except Exception as e:
+                    print(f"Ошибка при обработке {item_path}: {e}")
+            else:
+                print(f"Пропускаем директорию: {item_path}")
+
+    # Копируем локальные .xlsx файлы
     for item in os.listdir():
         if item.endswith('.xlsx'):
-            smb_shutil.copyfile(item, path2 + "/" + item)
+            dest = path2 + "\\" + item
+            try:
+                with open(item, 'rb') as src_file:
+                    with smbclient.open_file(dest, mode='wb') as dst_file:
+                        dst_file.write(src_file.read())
+            except Exception as e:
+                print(f"Ошибка при копировании {item}: {e}")
     return
 
 
