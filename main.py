@@ -71,7 +71,8 @@ def search_file():
             customer_order = item.startswith('Заказы клиентов', 12, 50)
             supplier_order = item.startswith('Заказы поставщиков', 12, 50)
             supplier_receipt = item.startswith('Поступления МХ', 12, 50)
-            sms = item.startswith('report_sent', 0, 50)
+            # sms = item.startswith('report_sent', 0, 50) #TODO Разобраться с наименованием файла СМС. Сейчас 134333.csv
+            sms = True
             if customer_order and item.endswith('.xlsx'):
                 f_custom_order.append(path_item + "/" + item)
             elif supplier_order and item.endswith('.xlsx'):
@@ -281,9 +282,9 @@ def sorting_sms(sms_row):
     mask_sms = sms_row['SMSSTC_CODE'] == 'delivered'  # Ищем строки, в которых доставленные СМС
     sms_row = sms_row[mask_sms]  # Формирует DataFrame в которых строки только доставленные СМС
     """
-    mask_sms = sms_row['Отправитель'] == 'CarBaz'
+    mask_sms = sms_row['Имя отправителя (SENDER)'] == 'CarBaz'
     sms_row = sms_row[mask_sms]
-    sms = sms_row['Количество'].sum()  # Суммируем количество СМС
+    sms = sms_row['Количество SMS (SMS_COUNT)'].sum()  # Суммируем количество СМС
     return sms
 
 
