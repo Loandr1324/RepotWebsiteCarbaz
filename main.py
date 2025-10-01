@@ -282,9 +282,9 @@ def sorting_sms(sms_row):
     mask_sms = sms_row['SMSSTC_CODE'] == 'delivered'  # Ищем строки, в которых доставленные СМС
     sms_row = sms_row[mask_sms]  # Формирует DataFrame в которых строки только доставленные СМС
     """
-    mask_sms = sms_row['Имя отправителя (SENDER)'] == 'CarBaz'
+    mask_sms = sms_row['Отправитель'] == 'CarBaz'
     sms_row = sms_row[mask_sms]
-    sms = sms_row['Количество SMS (SMS_COUNT)'].sum()  # Суммируем количество СМС
+    sms = sms_row['Количество'].sum()  # Суммируем количество СМС
     return sms
 
 
